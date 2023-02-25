@@ -4,26 +4,47 @@ import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import {
   selectUserName,
-  selectUserEmail,
+  // selectUserEmail,
   setUserLoginDetails,
   selectUserPhoto,
+  setSignOutState,
 } from "../features/user/userSlice";
+import { useEffect } from "react";
 
 const Header = (props) => {
   const dispatch = useDispatch();
   const history = useNavigate();
-  const username = useSelector(selectUserName);
+  const userName = useSelector(selectUserName);
   const userphoto = useSelector(selectUserPhoto);
 
+  useEffect(() => {
+    auth.onAuthStateChanged(async (user) => {
+      if (user) {
+        setUser(user);
+        history("/home");
+      }
+    });
+  }, [userName]);
+
   const handleAuth = () => {
-    auth
-      .signInWithPopup(provider)
-      .then((result) => {
-        setUser(result.user);
-      })
-      .catch((error) => {
-        console.log(error.message);
-      });
+    if (!userName) {
+      auth
+        .signInWithPopup(provider)
+        .then((result) => {
+          setUser(result.user);
+        })
+        .catch((error) => {
+          alert(error.message);
+        });
+    } else if (userName) {
+      auth
+        .signOut()
+        .then(() => {
+          dispatch(setSignOutState());
+          history("/");
+        })
+        .catch((err) => alert(err.message));
+    }
   };
 
   const setUser = (user) => {
@@ -41,33 +62,44 @@ const Header = (props) => {
       <Logo>
         <img src="/images/logo.svg" alt="Disney+" />
       </Logo>
-      <NavMenu>
-        <a href="/home">
-          <img src="/images/home-icon.svg" alt="Home" />
-          <span>Home</span>
-        </a>
-        <a href="/search">
-          <img src="/images/search-icon.svg" alt="Home" />
-          <span>Search</span>
-        </a>
-        <a href="/watchlist">
-          <img src="/images/watchlist-icon.svg" alt="Home" />
-          <span>Watchlist</span>
-        </a>
-        <a href="/originals">
-          <img src="/images/original-icon.svg" alt="Home" />
-          <span>Originals</span>
-        </a>
-        <a href="/movies">
-          <img src="/images/movie-icon.svg" alt="Home" />
-          <span>Movies</span>
-        </a>
-        <a href="/series">
-          <img src="/images/series-icon.svg" alt="Home" />
-          <span>Series</span>
-        </a>
-      </NavMenu>
-      <Login onClick={handleAuth}>Login</Login>
+      {!userName ? (
+        <Login onClick={handleAuth}>Login</Login>
+      ) : (
+        <>
+          <NavMenu>
+            <a href="/home">
+              <img src="/images/home-icon.svg" alt="Home" />
+              <span>Home</span>
+            </a>
+            <a href="/search">
+              <img src="/images/search-icon.svg" alt="Home" />
+              <span>Search</span>
+            </a>
+            <a href="/watchlist">
+              <img src="/images/watchlist-icon.svg" alt="Home" />
+              <span>Watchlist</span>
+            </a>
+            <a href="/originals">
+              <img src="/images/original-icon.svg" alt="Home" />
+              <span>Originals</span>
+            </a>
+            <a href="/movies">
+              <img src="/images/movie-icon.svg" alt="Home" />
+              <span>Movies</span>
+            </a>
+            <a href="/series">
+              <img src="/images/series-icon.svg" alt="Home" />
+              <span>Series</span>
+            </a>
+          </NavMenu>
+          <SignOut>
+            <UserImg src={userphoto} alt={userName} />
+            <Dropdown>
+              <span onClick={handleAuth}>Sign out</span>
+            </Dropdown>
+          </SignOut>
+        </>
+      )}
     </Nav>
   );
 };
@@ -131,6 +163,7 @@ const NavMenu = styled.div`
       line-height: 1.08;
       padding: 2px 0;
       padding-left: 5px;
+      top: 2px;
       white-space: nowrap;
       position: relative;
 
@@ -179,6 +212,44 @@ const Login = styled.a`
     color: #000;
     border-color: transparent;
     cursor: pointer;
+  }
+`;
+
+const UserImg = styled.img`
+  height: 100%;
+  border-radius: 50%;
+  width: 100%;
+`;
+
+const Dropdown = styled.div`
+  position: absolute;
+  top: 48px;
+  right: 0;
+  background: rgb(19, 19, 19);
+  border: 1px solid rgba(151, 151, 151, 0.34);
+  border-radius: 4px;
+  box-shadow: rgb(0 0 0 /50%) 0 0 18px 0;
+  padding: 10px;
+  font-size: 14px;
+  letter-spacing: 3px;
+  display: none;
+  width: 100px;
+`;
+
+const SignOut = styled.div`
+  postion: relative;
+  height: 48px;
+  width: 48px;
+  display: flex;
+  cursor: pointer;
+  align-items: center;
+  justify-content: center;
+
+  &:hover {
+    ${Dropdown} {
+      display: block;
+      transition-duration: 1s;
+    }
   }
 `;
 
